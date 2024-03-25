@@ -1,57 +1,87 @@
 version: '3.8'
+networks:
+
+  localnet:
+    name: localnet
+    driver: bridge
 
 services:
-
-  registryT:
-    # restart: always
-    image: registry:3.0.0-alpha.1
-    ports:
-      - 5000:5000
-    container_name: registry-php-one
-    
-    environment:
-      # REGISTRY_HTTP_ADDR: 0.0.0.0:5000
-      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/mycert.crt
-      REGISTRY_HTTP_TLS_KEY: /certs/mykey.key
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+  
+  php-one:
+    image: bogi2/laravel-dock-php-one:v1.0
+    container_name: phpTest
+    #restart: unless-stopped
     volumes:
-      - type: bind
-        source: ./data-registrymy
-        target: /var/lib/registry
-        bind:
-          propagation: rshared
-      - type: bind
-        source: ./path/certs
-        target: /certs
-      - type: bind
-        source: ./path/auth
-        target: /auth
-
-  registryN:
-    # restart: always
-    image: registry:3.0.0-alpha.1
-    ports:
-      - 5100:5000
-    container_name: registry-node-t
-    
+      - type: volume
+        source: lavareproject
+        target: /var/www/boilerplate
+      - nginx_data:/var/www/nginx
+    depends_on:
+      - sql-t
+      - node-t
+    networks:
+      - localnet
     environment:
-      # REGISTRY_HTTP_ADDR: 0.0.0.0:5000
-      REGISTRY_HTTP_TLS_CERTIFICATE: /certs1/mycert1.crt
-      REGISTRY_HTTP_TLS_KEY: /certs1/mykey1.key
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+      DB_HOST: mysqlTest
+      DB_PORT: 3306
+      DB_DATABASE: laravel_db
+      DB_USERNAME: bogi
+      DB_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: superPass
+    command: ["/bin/bash", "-c", "/var/www/La_str.sh"]
+
+
+  nginx-t:
+    image: nginx:1.25.4
+    container_name: nginxTest
+    # restart: unless-stopped
+    ports:
+      - '8080:80'
+    networks:
+      - localnet
+    depends_on:
+      - php-one
     volumes:
-      - type: bind
-        source: ./data-registrymy1
-        target: /var/lib/registry1
-        bind:
-          propagation: rshared
-      - type: bind
-        source: ./path/certs1
-        target: /certs1
-      - type: bind
-        source: ./path/auth
-        target: /auth
+      - nginx_data:/etc/nginx/conf.d
+      - type: volume
+        source: lavareproject
+        target: /var/www/boilerplate
+      # - type: bind
+      #   source: ./boilerplate/storage/logs
+      #   target: /var/www/boilerplate/storage/logs
+      #   bind:
+      #     propagation: rshared
+
+  sql-t:
+    image: mysql:latest
+    container_name: mysqlTest
+    #restart: unless-stopped
+    networks:
+      - localnet
+    environment:
+      MYSQL_DATABASE: laravel_db
+      MYSQL_USER: bogi
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: superPass
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - type: volume
+        source: lavareproject
+        target: /var/www/boilerplate
+      
+  node-t:
+    image: bogi2/laravel-dock-node-t:v1.0
+    #restart: unless-stopped
+    container_name: nodeTest
+    networks:
+      - localnet
+    command: ["/bin/bash", "-c", "./node-apd.sh"]
+    volumes:
+      - type: volume
+        source: lavareproject
+        target: /var/www/boilerplate
+    
+volumes:
+   lavareproject:
+   nginx_data:
+
