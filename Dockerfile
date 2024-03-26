@@ -19,10 +19,9 @@ COPY ./candle /var/www
 COPY ./nginx /var/www/ng_conf
 # Копіювання коду додатку
 COPY ./laravel-boilerplate /var/www/boilerplate
-RUN ls /var/www/boilerplate
+RUN ls -la /var/www/boilerplate
 
 RUN mv /var/www/boilerplate/.env.example /var/www/boilerplate/.env
-# RUN rm /var/www/boilerplate/composer.lock
 RUN chown -R www-data:www-data /var/www/
 WORKDIR /var/www/boilerplate
 
