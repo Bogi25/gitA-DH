@@ -18,9 +18,6 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag bogi2/laravel-dock-php-one:$(date +%s)
 
-    # - name: Login to Docker Hub
-    #   run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-
     - name: Log in to DockerHub
       uses: docker/login-action@v1
       with:
